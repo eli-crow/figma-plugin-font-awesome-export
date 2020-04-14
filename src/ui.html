@@ -1,0 +1,49 @@
+<button id="link">Link Selected</button>
+<button id="unlink">Unlink Selected</button>
+<button id="export-all">Export All</button>
+<textarea id="output"></textarea>
+
+<script>
+  const btnLink = document.getElementById("link");
+  const btnUnlink = document.getElementById("unlink");
+  const btnExportAll = document.getElementById("export-all");
+  const output = document.getElementById("output");
+
+  onmessage = (e) => {
+    const { type, payload } = e.data.pluginMessage;
+    switch (type) {
+      case "LINK_SELECTED_SUCCESS":
+        window.alert("successfully linked");
+        break;
+
+      case "UNLINK_SELECTED_SUCCESS":
+        window.alert("successfully unlinked");
+        break;
+
+      case "EXPORT_ALL_SUCCESS":
+        output.innerHTML = payload;
+        break;
+    }
+  };
+
+  function emit(type, payload) {
+    if (!type) return;
+    const message = {
+      type: type,
+    };
+    if (payload) message.payload = payload;
+    parent.postMessage({ pluginMessage: message }, "*");
+  }
+
+  btnLink.addEventListener("click", (e) => {
+    emit("LINK_SELECTED");
+  });
+
+  btnUnlink.addEventListener("click", (e) => {
+    emit("UNLINK_SELECTED");
+  });
+
+  btnExportAll.addEventListener("click", (e) => {
+    emit("EXPORT_ALL");
+  });
+</script>
