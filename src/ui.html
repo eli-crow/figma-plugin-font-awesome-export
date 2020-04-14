@@ -1,49 +1,44 @@
-<button id="link">Link Selected</button>
-<button id="unlink">Unlink Selected</button>
-<button id="export-all">Export All</button>
-<textarea id="output"></textarea>
+<div class="file">
+  <div class="file__header">
+    <div class="file__icon icon icon--draft"></div>
+    <span class="file__name type type--pos-large-bold" id="filenameLabel">icons.js</span>
+  </div>
+  <div class="file__action-group">
+    <button class="button button--primary file__action">
+      <div class="type type--pos-medium-normal" id="download">Download</div>
+    </button>
+    <button class="button button--secondary file__action">
+      <div class="type type--pos-medium-normal" id="copyAsText">Copy as text</div>
+    </button>
+  </div>
+</div>
 
-<script>
-  const btnLink = document.getElementById("link");
-  const btnUnlink = document.getElementById("unlink");
-  const btnExportAll = document.getElementById("export-all");
-  const output = document.getElementById("output");
+<form class="settings" id="settings">
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Frame Prefix</div>
+    <input
+      id="framePrefix"
+      type="input"
+      class="input horizontal-input__input"
+      placeholder="prefix"
+      value="icon"
+    />
+    <div class="horizontal-input__text type type--pos-small-normal">
+      &nbsp;/&nbsp;icon-name
+    </div>
+  </label>
 
-  onmessage = (e) => {
-    const { type, payload } = e.data.pluginMessage;
-    switch (type) {
-      case "LINK_SELECTED_SUCCESS":
-        window.alert("successfully linked");
-        break;
-
-      case "UNLINK_SELECTED_SUCCESS":
-        window.alert("successfully unlinked");
-        break;
-
-      case "EXPORT_ALL_SUCCESS":
-        output.innerHTML = payload;
-        break;
-    }
-  };
-
-  function emit(type, payload) {
-    if (!type) return;
-    const message = {
-      type: type,
-    };
-    if (payload) message.payload = payload;
-    parent.postMessage({ pluginMessage: message }, "*");
-  }
-
-  btnLink.addEventListener("click", (e) => {
-    emit("LINK_SELECTED");
-  });
-
-  btnUnlink.addEventListener("click", (e) => {
-    emit("UNLINK_SELECTED");
-  });
-
-  btnExportAll.addEventListener("click", (e) => {
-    emit("EXPORT_ALL");
-  });
-</script>
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Filename</div>
+    <input
+      id="filename"
+      type="input"
+      class="input horizontal-input__input"
+      placeholder="filename"
+      value="icons"
+    />
+    <div class="horizontal-input__text type type--pos-small-normal">
+      .js
+    </div>
+  </label>
+</form>

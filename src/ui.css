@@ -1,0 +1,49 @@
+.horizontal-input {
+  display: flex;
+  align-items: center;
+}
+.horizontal-input__label {
+  flex: 0 0 6rem;
+  white-space: nowrap;
+}
+.horizontal-input__input {
+  flex: 0 1 auto;
+}
+.horizontal-input__text {
+  flex: 0 0 5rem;
+  word-wrap: none;
+  white-space: nowrap;
+  color: rgb(189, 189, 189);
+}
+
+.file {
+  background: #ffffff;
+  border: 1px solid #dedede;
+  box-sizing: border-box;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.13);
+  border-radius: 5px;
+  padding: 0.5rem;
+}
+.file__header {
+  display: flex;
+  align-items: center;
+}
+.file__icon {
+}
+.file__name {
+}
+.file__action-group {
+  display: flex;
+  margin-top: 0.5rem;
+}
+.file__action {
+  display: flex;
+  align-items: center;
+}
+.file__action:not(:last-child) {
+  margin-right: 8px;
+}
+
+.settings {
+  margin-top: 1rem;
+}

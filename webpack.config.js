@@ -7,7 +7,7 @@ module.exports = (env, argv) => ({
   devtool: argv.mode === "production" ? false : "inline-source-map",
 
   entry: {
-    // ui: "./src/ui.ts",
+    ui: "./src/ui.js",
     code: "./src/code.ts",
   },
 
