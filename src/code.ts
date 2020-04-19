@@ -16,33 +16,48 @@ for (let name in settingDefaults) {
   if (!existing) storage.setPluginData(name, settingDefaults[name])
 }
 
-function getFileText() {
-  let unicodeCounter = 1
-  const all = figma.root.findAll(
-    n => n.type === 'FRAME' && n.name.trim().startsWith(storage.getPluginData("framePrefix")))
-  const results = []
 
-  //TODO: outline strokes(?), boolean add everything, flatten all children to one path
-  //TODO: resolve transforms before export
+function matchesPrefix(string: string): boolean {
+  const framePrefix = storage.getPluginData("framePrefix")
+  const prefixRegex = new RegExp(`^\\s*${framePrefix}\\s*/\\s*`, 'g')
+  return Boolean(string.match(prefixRegex))
+}
+
+function toIconName(string: string): string {
+  const framePrefix = storage.getPluginData("framePrefix")
+  const prefixRegex = new RegExp(`^\\s*${framePrefix}\\s*/\\s*`, 'g')
+  return kebabCase(string.trim().replace(prefixRegex, ''))
+}
+
+function getFileText() {
+  const all = figma.root.findAll(n => n.type === 'FRAME' && matchesPrefix(n.name))
+
   //TODO: resolve winding rules
+  let unicodeCounter = 1
+  const results = []
   all.forEach(n => {
     if (n.type === "FRAME") {
       const frame: FrameNode = n;
+
       if (frame.children.length <= 0) return;
 
       const clone = frame.clone()
       const vector = figma.flatten(clone.children)
 
-      const varName = camelCase(PREFIX_VAR + ' ' + frame.name)
-      const iconName = kebabCase(frame.name.trim().replace(new RegExp(`^${storage.getPluginData("framePrefix")}\\s*/\\s*`, 'g'), ''))
       const unicode = 'e' + unicodeCounter.toString().padStart(3, '0')
-      const pathData = vector.vectorPaths.map(p => p.data).join('')
       unicodeCounter++
+      const pathData = vector.vectorPaths.map(p => p.data).join(' ')
       results.push({
-        varName: varName,
+        varName: camelCase(PREFIX_VAR + ' ' + frame.name),
         prefix: PREFIX_SET,
-        iconName: iconName,
-        icon: [frame.width, frame.height, [], unicode, pathData]
+        iconName: toIconName(frame.name),
+        icon: [
+          frame.width,
+          frame.height,
+          [],
+          unicode,
+          pathData
+        ]
       })
 
       clone.remove()
@@ -57,9 +72,8 @@ function getFileText() {
     .join('\n');
 
   return `// generated from Figma document using the "FontAwesome Custom Icon Export" plugin
-
 ${output}
-  `
+`
 }
 
 figma.ui.onmessage = ({ type, payload }) => {
