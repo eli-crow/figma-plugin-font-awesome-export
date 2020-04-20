@@ -4,6 +4,9 @@ figma.showUI(__html__);
 
 const PREFIX_VAR = 'fa'
 const PREFIX_SET = 'fas'
+const VECTORABLES = [
+  'BOOLEAN_OPERATION',
+]
 
 const storage = figma.root
 
@@ -15,7 +18,6 @@ for (let name in settingDefaults) {
   const existing = storage.getPluginData(name);
   if (!existing) storage.setPluginData(name, settingDefaults[name])
 }
-
 
 function matchesPrefix(string: string): boolean {
   const framePrefix = storage.getPluginData("framePrefix")
@@ -29,42 +31,66 @@ function toIconName(string: string): string {
   return kebabCase(string.trim().replace(prefixRegex, ''))
 }
 
-function getFileText() {
-  const all = figma.root.findAll(n => n.type === 'FRAME' && matchesPrefix(n.name))
+function getIconsRaw() {
+  const iconFrames: Array<FrameNode> = figma.root.findAll(n => n.type === 'FRAME' && matchesPrefix(n.name)) as Array<FrameNode>
 
   //TODO: resolve winding rules
   let unicodeCounter = 1
   const results = []
-  all.forEach(n => {
-    if (n.type === "FRAME") {
-      const frame: FrameNode = n;
+  iconFrames.forEach(frame => {
+    const container = figma.createFrame()
+    const descendents = frame.findAll(n =>
+      (
+        n.type === 'BOOLEAN_OPERATION' ||
+        n.type === 'ELLIPSE' ||
+        n.type === 'FRAME' ||
+        n.type === 'LINE' ||
+        n.type === 'POLYGON' ||
+        n.type === 'RECTANGLE' ||
+        n.type === 'STAR' ||
+        n.type === 'TEXT' ||
+        n.type === 'VECTOR'
+      ) &&
+      n.parent.type !== 'BOOLEAN_OPERATION'
+    )
 
-      if (frame.children.length <= 0) return;
+    if (descendents.length === 0) return
 
-      const clone = frame.clone()
-      const vector = figma.flatten(clone.children)
+    const clonedDescendents = descendents.map(n => {
+      const cloned = n.clone()
+      container.appendChild(cloned)
+      return cloned
+    })
 
-      const unicode = 'e' + unicodeCounter.toString().padStart(3, '0')
-      unicodeCounter++
-      const pathData = vector.vectorPaths.map(p => p.data).join(' ')
-      results.push({
-        varName: camelCase(PREFIX_VAR + ' ' + frame.name),
-        prefix: PREFIX_SET,
-        iconName: toIconName(frame.name),
-        icon: [
-          frame.width,
-          frame.height,
-          [],
-          unicode,
-          pathData
-        ]
-      })
+    const flattened = figma.flatten(clonedDescendents, container)
 
-      clone.remove()
-    }
+    const unicode = 'e' + unicodeCounter.toString().padStart(3, '0')
+    unicodeCounter++
+    const pathData = flattened.vectorPaths.map(p => p.data).join(' ')
+    results.push({
+      varName: camelCase(PREFIX_VAR + ' ' + frame.name),
+      prefix: PREFIX_SET,
+      iconName: toIconName(frame.name),
+      icon: [
+        frame.width,
+        frame.height,
+        [],
+        unicode,
+        pathData
+      ]
+    })
+
+    container.remove()
   })
 
-  const output = results
+  return results
+}
+
+function getFileText() {
+
+  const raw = getIconsRaw()
+
+  const output = raw
     .map(result => {
       const { varName, ...rest } = result
       return `export const ${varName} = ${JSON.stringify(rest)};`
@@ -113,4 +139,8 @@ for (let name in settingDefaults) {
 figma.ui.postMessage({
   type: "INIT",
   payload: initialSettings
+})
+figma.ui.postMessage({
+  type: "UPDATE_PREVIEW",
+  payload: getIconsRaw()
 })

@@ -10,6 +10,7 @@ const filenameLabelEl = document.getElementById("filenameLabel");
 const settingsEl = document.getElementById("settings");
 const framePrefixEl = document.getElementById("framePrefix");
 const filenameEl = document.getElementById("filename");
+const previewGroupEl = document.getElementById("previewGroup");
 
 function download(filename, text) {
   var element = document.createElement("a");
@@ -41,13 +42,24 @@ onmessage = (e) => {
       updateView();
       break;
 
+    case "UPDATE_PREVIEW":
+      const icons = payload;
+      previewGroupEl.innerHTML = icons.map(i => `<svg class="preview" viewBox="0 0 ${i.icon[0]} ${i.icon[1]}"><path d="${i.icon[4]}" fill="currentColor" fill-rule="evenodd"></path></svg>`).join('\n')
+      break;
+
     case "DOWNLOAD_SUCCESS":
-      const {filename, text} = payload
+      const { filename, text } = payload
       download(filename, text)
       break;
 
     case "COPY_AS_TEXT_SUCCESS":
       copyToClipboard(payload.text)
+      break;
+
+    default:
+      console.warn(`Unknown message from plugin:
+type:    "${type}"
+payload: "${JSON.stringify(payload)}"`)
       break;
   }
 };

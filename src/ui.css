@@ -2,13 +2,16 @@
   display: flex;
   align-items: center;
 }
+
 .horizontal-input__label {
   flex: 0 0 6rem;
   white-space: nowrap;
 }
+
 .horizontal-input__input {
   flex: 0 1 auto;
 }
+
 .horizontal-input__text {
   flex: 0 0 5rem;
   word-wrap: none;
@@ -24,22 +27,26 @@
   border-radius: 5px;
   padding: 0.5rem;
 }
+
 .file__header {
   display: flex;
   align-items: center;
 }
-.file__icon {
-}
-.file__name {
-}
+
+.file__icon {}
+
+.file__name {}
+
 .file__action-group {
   display: flex;
   margin-top: 0.5rem;
 }
+
 .file__action {
   display: flex;
   align-items: center;
 }
+
 .file__action:not(:last-child) {
   margin-right: 8px;
 }
@@ -47,3 +54,12 @@
 .settings {
   margin-top: 1rem;
 }
+
+.preview-group {
+  display: grid;
+  grid-gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
+}
+
+.preview {}
