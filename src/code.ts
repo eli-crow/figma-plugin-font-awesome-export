@@ -1,4 +1,4 @@
-import { camelCase, kebabCase } from 'lodash'
+import { camelCase, kebabCase } from 'lodash';
 
 figma.showUI(__html__);
 
@@ -31,7 +31,7 @@ function toIconName(string: string): string {
   return kebabCase(string.trim().replace(prefixRegex, ''))
 }
 
-function getIconsRaw() {
+function getIconData() {
   const iconFrames: Array<FrameNode> = figma.root.findAll(n => n.type === 'FRAME' && matchesPrefix(n.name)) as Array<FrameNode>
 
   //TODO: resolve winding rules
@@ -68,38 +68,21 @@ function getIconsRaw() {
     unicodeCounter++
     const pathData = flattened.vectorPaths.map(p => p.data).join(' ')
     results.push({
+      offsetX: flattened.x,
+      offsetY: flattened.y,
       varName: camelCase(PREFIX_VAR + ' ' + frame.name),
       prefix: PREFIX_SET,
       iconName: toIconName(frame.name),
-      icon: [
-        frame.width,
-        frame.height,
-        [],
-        unicode,
-        pathData
-      ]
+      width: frame.width,
+      height: frame.height,
+      unicode: unicode,
+      pathData: pathData
     })
 
     container.remove()
   })
 
   return results
-}
-
-function getFileText() {
-
-  const raw = getIconsRaw()
-
-  const output = raw
-    .map(result => {
-      const { varName, ...rest } = result
-      return `export const ${varName} = ${JSON.stringify(rest)};`
-    })
-    .join('\n');
-
-  return `// generated from Figma document using the "FontAwesome Custom Icon Export" plugin
-${output}
-`
 }
 
 figma.ui.onmessage = ({ type, payload }) => {
@@ -116,7 +99,7 @@ figma.ui.onmessage = ({ type, payload }) => {
         type: "DOWNLOAD_SUCCESS",
         payload: {
           filename: storage.getPluginData("filename") + '.js',
-          text: getFileText()
+          data: getIconData()
         }
       })
       break;
@@ -125,7 +108,7 @@ figma.ui.onmessage = ({ type, payload }) => {
       figma.ui.postMessage({
         type: "COPY_AS_TEXT_SUCCESS",
         payload: {
-          text: getFileText()
+          data: getIconData()
         }
       })
       break;
@@ -139,8 +122,4 @@ for (let name in settingDefaults) {
 figma.ui.postMessage({
   type: "INIT",
   payload: initialSettings
-})
-figma.ui.postMessage({
-  type: "UPDATE_PREVIEW",
-  payload: getIconsRaw()
 })

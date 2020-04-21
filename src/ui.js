@@ -2,15 +2,40 @@ import "./figma-plugin-ds.min.css";
 import "./figma-plugin-ds.min.js";
 import "./ui.css";
 
-import copyToClipboard from 'copy-to-clipboard';
+import paper from "paper/dist/paper-core";
 
-const downloadEl = document.getElementById("download")
+import copyToClipboard from "copy-to-clipboard";
+
+const downloadEl = document.getElementById("download");
 const copyAsTextEl = document.getElementById("copyAsText");
 const filenameLabelEl = document.getElementById("filenameLabel");
 const settingsEl = document.getElementById("settings");
 const framePrefixEl = document.getElementById("framePrefix");
 const filenameEl = document.getElementById("filename");
-const previewGroupEl = document.getElementById("previewGroup");
+// const previewGroupEl = document.getElementById("previewGroup");
+
+const paperCanvas = document.createElement("canvas");
+paper.setup(paperCanvas);
+
+function toFileText(iconData) {
+  const output = iconData
+    .map((data) => {
+      const p = new paper.CompoundPath(data.pathData);
+      p.reorient(false, true);
+      p.translate(new paper.Point(data.offsetX, data.offsetY))
+      const correctedPathData = p.pathData;
+      return `export const ${data.varName} = ${JSON.stringify({
+        prefix: "fas",
+        iconName: data.iconName,
+        icon: [data.width, data.height, [], data.unicode, correctedPathData],
+      })};`;
+    })
+    .join("\n");
+
+  return `// generated from Figma document using the "FontAwesome Custom Icon Export" plugin
+${output}
+`;
+}
 
 function download(filename, text) {
   var element = document.createElement("a");
@@ -42,24 +67,22 @@ onmessage = (e) => {
       updateView();
       break;
 
-    case "UPDATE_PREVIEW":
-      const icons = payload;
-      previewGroupEl.innerHTML = icons.map(i => `<svg class="preview" viewBox="0 0 ${i.icon[0]} ${i.icon[1]}"><path d="${i.icon[4]}" fill="currentColor" fill-rule="evenodd"></path></svg>`).join('\n')
+    case "DOWNLOAD_SUCCESS": {
+      const { filename, data } = payload;
+      download(filename, toFileText(data));
       break;
+    }
 
-    case "DOWNLOAD_SUCCESS":
-      const { filename, text } = payload
-      download(filename, text)
+    case "COPY_AS_TEXT_SUCCESS": {
+      const { data } = payload;
+      copyToClipboard(toFileText(data));
       break;
-
-    case "COPY_AS_TEXT_SUCCESS":
-      copyToClipboard(payload.text)
-      break;
+    }
 
     default:
       console.warn(`Unknown message from plugin:
 type:    "${type}"
-payload: "${JSON.stringify(payload)}"`)
+payload: "${JSON.stringify(payload)}"`);
       break;
   }
 };
@@ -73,13 +96,13 @@ function emit(type, payload) {
   parent.postMessage({ pluginMessage: message }, "*");
 }
 
-downloadEl.addEventListener("click", e => {
-  emit("DOWNLOAD")
-})
+downloadEl.addEventListener("click", (e) => {
+  emit("DOWNLOAD");
+});
 
-copyAsTextEl.addEventListener("click", e => {
-  emit("COPY_AS_TEXT")
-})
+copyAsTextEl.addEventListener("click", (e) => {
+  emit("COPY_AS_TEXT");
+});
 
 settingsEl.addEventListener("change", (e) => {
   const newSettings = {};
