@@ -26,7 +26,7 @@ Which means you can do this:
 Settings are stored on a project by project basis.
 * __Frame Prefix__: The plugin will export all frames with this before the first slash (_example:_ `icon / close`, `icon / download`). Everything after the first slash will be converted to `kebab-case` and used as the icon's name.
 * __Filename__: The name of the file to be downloaded 
-* __Preserve Margins__: When enabled, the space around the icon in the frame will be included in the icon export – otherwise the icon `viewBox` will be fit to the bounds of thie icon.
+* __Preserve Margins__: When enabled, the space around the icon in the frame will be included in the icon export – otherwise the icon's `viewBox` will be fit to the bounds of thie icon.
 
 ## Bug Reports / Feature Requests
 Please submit all bug reports and ideas on the GitHub repo's [issue page](https://github.com/eli-crow/figma-plugin-font-awesome-export/issues).
@@ -91,4 +91,4 @@ export default (props) => {
 }
 ```
 
-For more info, read [the official documentation](ttps://fontawesome.com/how-to-use/on-the-web/advanced/svg-javascript-core).
+For more info, read [the official documentation](https://fontawesome.com/how-to-use/on-the-web/advanced/svg-javascript-core).
