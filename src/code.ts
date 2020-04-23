@@ -1,6 +1,6 @@
 import { camelCase, kebabCase } from 'lodash';
 
-figma.showUI(__html__);
+figma.showUI(__html__, {height: 226});
 
 const PREFIX_VAR = 'fa'
 const PREFIX_SET = 'fas'
@@ -12,7 +12,8 @@ const storage = figma.root
 
 const settingDefaults = {
   framePrefix: 'icon',
-  filename: 'icons'
+  filename: 'icons',
+  preserveMargins: 'true',
 }
 for (let name in settingDefaults) {
   const existing = storage.getPluginData(name);
@@ -32,13 +33,14 @@ function toIconName(string: string): string {
 }
 
 function getIconData() {
-  const iconFrames: Array<FrameNode> = figma.root.findAll(n => n.type === 'FRAME' && matchesPrefix(n.name)) as Array<FrameNode>
+  const iconFrames: Array<FrameNode> = figma.root.findAll(n => (n.type === 'FRAME' || n.type === 'COMPONENT') && matchesPrefix(n.name)) as Array<FrameNode>
 
   //TODO: resolve winding rules
   let unicodeCounter = 1
   const results = []
+  const container = figma.createFrame()
   iconFrames.forEach(frame => {
-    const container = figma.createFrame()
+
     const descendents = frame.findAll(n =>
       (
         n.type === 'BOOLEAN_OPERATION' ||
@@ -57,8 +59,18 @@ function getIconData() {
     if (descendents.length === 0) return
 
     const clonedDescendents = descendents.map(n => {
-      const cloned = n.clone()
-      container.appendChild(cloned)
+      let cloned = n.clone()
+      //@ts-ignore
+      if (n.outlineStroke) {
+        //@ts-ignore
+        const strokes = cloned.outlineStroke()
+        if (strokes != null) {
+          cloned = figma.flatten([figma.union([strokes, cloned], container)])
+        }
+      } else {
+        container.appendChild(cloned)
+      }
+
       return cloned
     })
 
@@ -75,12 +87,15 @@ function getIconData() {
       iconName: toIconName(frame.name),
       width: frame.width,
       height: frame.height,
+      iconWidth: flattened.width,
+      iconHeight: flattened.height,
       unicode: unicode,
-      pathData: pathData
+      pathData: pathData,
+      preserveMargins: storage.getPluginData("preserveMargins") === 'true' ? true : false,
     })
 
-    container.remove()
   })
+  container.remove()
 
   return results
 }

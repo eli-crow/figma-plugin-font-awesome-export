@@ -3,16 +3,21 @@ import "./figma-plugin-ds.min.js";
 import "./ui.css";
 
 import paper from "paper/dist/paper-core";
-
 import copyToClipboard from "copy-to-clipboard";
 
-const downloadEl = document.getElementById("download");
-const copyAsTextEl = document.getElementById("copyAsText");
-const filenameLabelEl = document.getElementById("filenameLabel");
-const settingsEl = document.getElementById("settings");
-const framePrefixEl = document.getElementById("framePrefix");
-const filenameEl = document.getElementById("filename");
-// const previewGroupEl = document.getElementById("previewGroup");
+const TARGET_IDS = [
+  "download",
+  "copyAsText",
+  "filenameLabel",
+  "settings",
+  "framePrefix",
+  "filename",
+  "preserveMargins",
+];
+const targets = TARGET_IDS.reduce((result, name) => {
+  result[name] = document.getElementById(name);
+  return result;
+}, {});
 
 const paperCanvas = document.createElement("canvas");
 paper.setup(paperCanvas);
@@ -22,12 +27,20 @@ function toFileText(iconData) {
     .map((data) => {
       const p = new paper.CompoundPath(data.pathData);
       p.reorient(false, true);
-      p.translate(new paper.Point(data.offsetX, data.offsetY))
+      if (data.preserveMargins) {
+        p.translate(new paper.Point(data.offsetX, data.offsetY));
+      }
       const correctedPathData = p.pathData;
       return `export const ${data.varName} = ${JSON.stringify({
         prefix: "fas",
         iconName: data.iconName,
-        icon: [data.width, data.height, [], data.unicode, correctedPathData],
+        icon: [
+          data.preserveMargins ? data.width : data.iconWidth,
+          data.preserveMargins ? data.height : data.iconHeight,
+          [],
+          data.unicode,
+          correctedPathData,
+        ],
       })};`;
     })
     .join("\n");
@@ -54,7 +67,7 @@ function download(filename, text) {
 }
 
 function updateView() {
-  filenameLabelEl.innerHTML = filenameEl.value + ".js";
+  targets.filenameLabel.innerHTML = targets.filenameLabel.value + ".js";
 }
 
 onmessage = (e) => {
@@ -62,8 +75,13 @@ onmessage = (e) => {
   switch (type) {
     case "INIT":
       const settings = payload;
-      framePrefixEl.value = settings.framePrefix;
-      filenameEl.value = settings.filename;
+      targets.framePrefix.value = settings.framePrefix;
+      targets.filenameLabel.value = settings.filename;
+      if (settings.preserveMargins === 'true') {
+        targets.preserveMargins.checked = true;
+      } else {
+        targets.preserveMargins.removeAttribute("checked");
+      }
       updateView();
       break;
 
@@ -96,19 +114,20 @@ function emit(type, payload) {
   parent.postMessage({ pluginMessage: message }, "*");
 }
 
-downloadEl.addEventListener("click", (e) => {
+targets.download.addEventListener("click", (e) => {
   emit("DOWNLOAD");
 });
 
-copyAsTextEl.addEventListener("click", (e) => {
+targets.copyAsText.addEventListener("click", (e) => {
   emit("COPY_AS_TEXT");
 });
 
-settingsEl.addEventListener("change", (e) => {
-  const newSettings = {};
-  for (var el of settingsEl.elements) {
-    newSettings[el.id] = el.value;
-  }
+targets.settings.addEventListener("change", (e) => {
+  const newSettings = {
+    preserveMargins: targets.preserveMargins.checked ? 'true' : 'false',
+    filename: targets.filename.value,
+    framePrefix: targets.framePrefix.value,
+  };
   emit("UPDATE_SETTINGS", newSettings);
   updateView();
 });
