@@ -22,7 +22,9 @@ module.exports = (env, argv) => ({
     ],
   },
 
-  resolve: { extensions: [".tsx", ".ts", ".jsx", ".js", ".json"] },
+  resolve: {
+    extensions: [".tsx", ".ts", ".jsx", ".js", ".json"],
+  },
 
   output: {
     filename: "[name].js",

@@ -1,5 +1,5 @@
 {
-  "name": "Font Awesome Custom Icon Export",
+  "name": "Font Awesome Export",
   "id": "831640138721876195",
   "api": "1.0.0",
   "main": "dist/code.js",
