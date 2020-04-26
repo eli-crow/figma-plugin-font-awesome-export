@@ -5,6 +5,8 @@ import "./ui.css";
 import paper from "paper/dist/paper-core";
 import copyToClipboard from "copy-to-clipboard";
 
+//all very hacky. I couldn't get paper-
+
 const TARGET_IDS = [
   "download",
   "copyAsText",

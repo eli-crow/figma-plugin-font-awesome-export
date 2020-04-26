@@ -95,6 +95,7 @@ function getIconData() {
 
     if (descendents.length === 0) return
 
+    //hacky hack hack. 
     const clonedDescendents = descendents.map(n => {
       let cloned = n.clone()
       //@ts-ignore

@@ -1,25 +1,26 @@
 {
   "name": "figma-plugin-font-awesome-export",
-  "version": "1.0.0",
-  "description": "This plugin template uses Typescript. If you are familiar with Javascript, Typescript will look very familiar. In fact, valid Javascript code is already valid Typescript code.",
+  "version": "0.1.0",
+  "description": "Take control of your iconography. Export your frames to the FontAwesome .js icon format with ease.",
   "main": "code.js",
   "scripts": {
     "watch": "npx webpack --mode=development --watch",
     "build": "npx webpack --mode=production",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: I'm too lazy to test this robustly. 🤷‍♂️\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "figma",
+    "plugin",
+    "FontAwesome",
+    "icon",
+    "font"
+  ],
+  "author": "Eli Crow",
+  "license": "CC BY 4.0",
   "dependencies": {
-    "camelcase": "^6.0.0",
     "copy-to-clipboard": "^3.3.1",
-    "jest-canvas-mock": "^2.2.0",
-    "jsdom": "^16.2.2",
     "lodash": "^4.17.15",
-    "paper": "^0.12.4",
-    "paper-jsdom": "^0.12.4",
-    "paper-jsdom-canvas": "^0.12.4"
+    "paper": "^0.12.4"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.149",
@@ -29,7 +30,6 @@
     "html-webpack-plugin": "^4.2.0",
     "style-loader": "^1.1.3",
     "ts-loader": "^6.2.2",
-    "tsconfig-paths-webpack-plugin": "^3.2.0",
     "typescript": "^3.8.3",
     "url-loader": "^4.1.0",
     "webpack": "^4.42.1",
