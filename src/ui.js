@@ -5,6 +5,8 @@ import "./ui.css";
 import paper from "paper/dist/paper-core";
 import copyToClipboard from "copy-to-clipboard";
 
+//all very hacky. I couldn't get paper-jsdom working, so i'm just using it on the browser side.
+
 const TARGET_IDS = [
   "download",
   "copyAsText",
@@ -22,7 +24,7 @@ const targets = TARGET_IDS.reduce((result, name) => {
 const paperCanvas = document.createElement("canvas");
 paper.setup(paperCanvas);
 
-function toFileText(iconData) {
+function toFileText(iconData, documentName) {
   const output = iconData
     .map((data) => {
       const p = new paper.CompoundPath(data.pathData);
@@ -45,7 +47,7 @@ function toFileText(iconData) {
     })
     .join("\n");
 
-  return `// generated from Figma document using the "FontAwesome Custom Icon Export" plugin
+  return `// generated from Figma document "${documentName}" using the "FontAwesome Export" plugin
 ${output}
 `;
 }
@@ -86,14 +88,14 @@ onmessage = (e) => {
       break;
 
     case "DOWNLOAD_SUCCESS": {
-      const { filename, data } = payload;
-      download(filename, toFileText(data));
+      const { filename, data, documentName } = payload;
+      download(filename, toFileText(data, documentName));
       break;
     }
 
     case "COPY_AS_TEXT_SUCCESS": {
-      const { data } = payload;
-      copyToClipboard(toFileText(data));
+      const { data, documentName } = payload;
+      copyToClipboard(toFileText(data, documentName));
       break;
     }
 

@@ -81,7 +81,7 @@ export default {
 ### React Example
 ``` jsx
 // SomeComponent.js
-import { FontAwesomeIcon } from @fortawesome/react-fontawesome;
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCustomIcon } from './path/to/icons.js';
 
 export default (props) => {

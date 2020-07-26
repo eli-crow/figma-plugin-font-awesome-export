@@ -1,6 +1,6 @@
-import { camelCase, kebabCase } from 'lodash';
+import { camelCase, kebabCase, clone } from 'lodash';
 
-figma.showUI(__html__, {height: 226});
+figma.showUI(__html__, { height: 226 });
 
 const PREFIX_VAR = 'fa'
 const PREFIX_SET = 'fas'
@@ -32,49 +32,106 @@ function toIconName(string: string): string {
   return kebabCase(string.trim().replace(prefixRegex, ''))
 }
 
+function isCompletelyTransparent(node: GeometryMixin): boolean {
+
+  if (node.fillStyleId) {
+    const style = figma.getStyleById(node.fillStyleId.toString())
+    if (style.type === 'PAINT') {
+      //@ts-ignore
+      const paintStyle: PaintStyle = style;
+      if (paintStyle.paints.some(p => p.visible && p.opacity > 0)) {
+        return false
+      }
+    }
+  } else {
+    //@ts-ignore
+    if (node.fills.some(p => p.visible && p.opacity > 0)) {
+      return false
+    }
+  }
+
+  if (node.strokeStyleId) {
+    const style = figma.getStyleById(node.strokeStyleId.toString())
+    if (style.type === 'PAINT') {
+      //@ts-ignore
+      const paintStyle: PaintStyle = style;
+      if (paintStyle.paints.some(p => p.visible && p.opacity > 0)) {
+        return false
+      }
+    }
+  } else {
+    //@ts-ignore
+    if (node.strokes.some(p => p.visible && p.opacity > 0)) {
+      return false
+    }
+  }
+
+  return true
+}
+
 function getIconData() {
-  const iconFrames: Array<FrameNode> = figma.root.findAll(n => (n.type === 'FRAME' || n.type === 'COMPONENT') && matchesPrefix(n.name)) as Array<FrameNode>
+  const iconFrames: Array<FrameNode> = figma.root.findAll(n =>
+    (n.type === 'FRAME' || n.type === 'COMPONENT')
+    && n.visible
+    && n.opacity > 0
+    && matchesPrefix(n.name)
+  ) as Array<FrameNode>
 
   //TODO: resolve winding rules
   let unicodeCounter = 1
   const results = []
-  const container = figma.createFrame()
   iconFrames.forEach(frame => {
 
     const descendents = frame.findAll(n =>
       (
         n.type === 'BOOLEAN_OPERATION' ||
         n.type === 'ELLIPSE' ||
-        n.type === 'FRAME' ||
         n.type === 'LINE' ||
         n.type === 'POLYGON' ||
         n.type === 'RECTANGLE' ||
         n.type === 'STAR' ||
         n.type === 'TEXT' ||
         n.type === 'VECTOR'
-      ) &&
-      n.parent.type !== 'BOOLEAN_OPERATION'
+      )
+      && n.parent.type !== 'BOOLEAN_OPERATION'
+      && n.opacity > 0
+      && n.visible
+      && !isCompletelyTransparent(n)
     )
 
     if (descendents.length === 0) return
 
+    console.log(frame.name)
+
+    //hacky hack hack. 
     const clonedDescendents = descendents.map(n => {
-      let cloned = n.clone()
-      //@ts-ignore
-      if (n.outlineStroke) {
-        //@ts-ignore
-        const strokes = cloned.outlineStroke()
-        if (strokes != null) {
-          cloned = figma.flatten([figma.union([strokes, cloned], container)])
-        }
-      } else {
-        container.appendChild(cloned)
+      const clone = n.clone()
+      if (frame.rotation !== 0) {
+        clone.rotation -= frame.rotation;
       }
 
-      return cloned
+      //@ts-ignore
+      if (clone.outlineStroke) {
+        //@ts-ignore
+        const strokes = clone.outlineStroke()
+        if (strokes != null) {
+          const union = figma.union([strokes, clone], figma.currentPage)
+          const flat = figma.flatten([union], figma.currentPage)
+          return flat
+        }
+        else {
+          const flat = figma.flatten([clone], figma.currentPage)
+          return flat
+        }
+      }
+      else {
+        const flat = figma.flatten([clone], figma.currentPage)
+        return flat
+      }
     })
 
-    const flattened = figma.flatten(clonedDescendents, container)
+    const finalUnion = figma.union(clonedDescendents, figma.currentPage);
+    const flattened = figma.flatten([finalUnion], figma.currentPage);
 
     const unicode = 'e' + unicodeCounter.toString().padStart(3, '0')
     unicodeCounter++
@@ -94,10 +151,10 @@ function getIconData() {
       preserveMargins: storage.getPluginData("preserveMargins") === 'true' ? true : false,
     })
 
+    flattened.remove()
   })
-  container.remove()
 
-  return results
+  return results.reverse()
 }
 
 figma.ui.onmessage = ({ type, payload }) => {
@@ -113,6 +170,7 @@ figma.ui.onmessage = ({ type, payload }) => {
       figma.ui.postMessage({
         type: "DOWNLOAD_SUCCESS",
         payload: {
+          documentName: figma.root.name,
           filename: storage.getPluginData("filename") + '.js',
           data: getIconData()
         }
@@ -123,6 +181,7 @@ figma.ui.onmessage = ({ type, payload }) => {
       figma.ui.postMessage({
         type: "COPY_AS_TEXT_SUCCESS",
         payload: {
+          documentName: figma.root.name,
           data: getIconData()
         }
       })
