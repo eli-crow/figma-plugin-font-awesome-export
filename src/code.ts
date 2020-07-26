@@ -101,34 +101,41 @@ function getIconData() {
 
     if (descendents.length === 0) return
 
-    console.log(frame.name)
-
-    //hacky hack hack. 
+    //hacky hack hack.
     const clonedDescendents = descendents.map(n => {
       const clone = n.clone()
       if (frame.rotation !== 0) {
         clone.rotation -= frame.rotation;
       }
 
-      //@ts-ignore
-      if (clone.outlineStroke) {
+      try {
         //@ts-ignore
-        const strokes = clone.outlineStroke()
-        if (strokes != null) {
-          const union = figma.union([strokes, clone], figma.currentPage)
-          const flat = figma.flatten([union], figma.currentPage)
-          return flat
+        if (clone.outlineStroke) {
+          //@ts-ignore
+          const strokes = clone.outlineStroke()
+          if (strokes != null) {
+            const union = figma.union([strokes, clone], figma.currentPage)
+            const flat = figma.flatten([union], figma.currentPage)
+            return flat
+          }
+          else {
+            const flat = figma.flatten([clone], figma.currentPage)
+            return flat
+          }
         }
         else {
           const flat = figma.flatten([clone], figma.currentPage)
           return flat
         }
       }
-      else {
-        const flat = figma.flatten([clone], figma.currentPage)
-        return flat
+      catch (e) {
+        return null;
       }
-    })
+    }).filter(n => n !== null)
+
+    if (clonedDescendents.length <= 0) {
+      return;
+    }
 
     const finalUnion = figma.union(clonedDescendents, figma.currentPage);
     const flattened = figma.flatten([finalUnion], figma.currentPage);

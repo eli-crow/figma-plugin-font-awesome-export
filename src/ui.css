@@ -19,6 +19,12 @@
   color: rgb(189, 189, 189);
 }
 
+.input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+}
+
 .file {
   background: #ffffff;
   border: 1px solid #dedede;
