@@ -1,6 +1,6 @@
 import { camelCase, kebabCase, clone } from 'lodash';
 
-figma.showUI(__html__, { height: 226 });
+figma.showUI(__html__, { height: 266 });
 
 const PREFIX_VAR = 'fa'
 const PREFIX_SET = 'fas'
@@ -14,6 +14,7 @@ const settingDefaults = {
   framePrefix: 'icon',
   filename: 'icons',
   preserveMargins: 'true',
+  outputType: 'font-awesome',
 }
 for (let name in settingDefaults) {
   const existing = storage.getPluginData(name);
@@ -167,6 +168,7 @@ function getIconData() {
 figma.ui.onmessage = ({ type, payload }) => {
   switch (type) {
     case "UPDATE_SETTINGS":
+      console.log(payload);
       const settings = payload
       for (let name in settings) {
         storage.setPluginData(name, settings[name])
@@ -195,6 +197,8 @@ figma.ui.onmessage = ({ type, payload }) => {
       break;
   }
 };
+
+
 
 const initialSettings = {}
 for (let name in settingDefaults) {

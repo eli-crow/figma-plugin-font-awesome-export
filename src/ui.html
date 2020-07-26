@@ -15,6 +15,14 @@
 
 <form class="settings" id="settings">
   <label class="horizontal-input">
+    <div class="label horizontal-input__label">Filename</div>
+    <select id="outputType" class="input horizontal-input__input">
+      <option value="xamarin-forms" selected>Xamarin.Forms ResourceDictionary</option>
+      <option value="font-awesome">Font Awesome SVG in JS</option>
+    </select> 
+  </label>
+
+  <label class="horizontal-input">
     <div class="label horizontal-input__label">Frame Prefix</div>
     <input id="framePrefix" type="input" class="input horizontal-input__input" placeholder="prefix" value="icon" />
     <div class="horizontal-input__text type type--pos-small-normal">

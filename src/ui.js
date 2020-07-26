@@ -15,6 +15,7 @@ const TARGET_IDS = [
   "framePrefix",
   "filename",
   "preserveMargins",
+  "outputType",
 ];
 const targets = TARGET_IDS.reduce((result, name) => {
   result[name] = document.getElementById(name);
@@ -24,33 +25,55 @@ const targets = TARGET_IDS.reduce((result, name) => {
 const paperCanvas = document.createElement("canvas");
 paper.setup(paperCanvas);
 
-function toFileText(iconData, documentName) {
-  const output = iconData
-    .map((data) => {
-      const p = new paper.CompoundPath(data.pathData);
-      p.reorient(false, true);
-      if (data.preserveMargins) {
-        p.translate(new paper.Point(data.offsetX, data.offsetY));
-      }
-      const correctedPathData = p.pathData;
-      return `export const ${data.varName} = ${JSON.stringify({
-        prefix: "fas",
-        iconName: data.iconName,
-        icon: [
-          data.preserveMargins ? data.width : data.iconWidth,
-          data.preserveMargins ? data.height : data.iconHeight,
-          [],
-          data.unicode,
-          correctedPathData,
-        ],
-      })};`;
-    })
-    .join("\n");
+const fileTextFunctions = {
+  'xamarin-forms'(iconData, documentName) {
+    const output = iconData
+      .map((data) => {
+        const p = new paper.CompoundPath(data.pathData);
+        p.reorient(false, true);
+        const correctedPathData = p.pathData;
+        return `\t<PathGeometry x:Name="${data.varName}" Figures="${correctedPathData}" />`;
+      })
+      .join("\n");
 
-  return `// generated from Figma document "${documentName}" using the "FontAwesome Export" plugin
+    return `<?xml version="1.0" encoding="utf-8"?>
+
+<!-- generated from Figma document "${documentName}" using the "FontAwesome Export" plugin -->
+<ResourceDictionary xmlns="http://xamarin.com/schemas/2014/forms"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 ${output}
-`;
-}
+</ResourceDictionary>
+  `;
+  },
+
+  'font-awesome'(iconData, documentName) {
+    const output = iconData
+      .map((data) => {
+        const p = new paper.CompoundPath(data.pathData);
+        p.reorient(false, true);
+        if (data.preserveMargins) {
+          p.translate(new paper.Point(data.offsetX, data.offsetY));
+        }
+        const correctedPathData = p.pathData;
+        return `export const ${data.varName} = ${JSON.stringify({
+          prefix: "fas",
+          iconName: data.iconName,
+          icon: [
+            data.preserveMargins ? data.width : data.iconWidth,
+            data.preserveMargins ? data.height : data.iconHeight,
+            [],
+            data.unicode,
+            correctedPathData,
+          ],
+        })};`;
+      })
+      .join("\n");
+
+    return `// generated from Figma document "${documentName}" using the "FontAwesome Export" plugin
+${output}
+  `;
+  }
+};
 
 function download(filename, text) {
   var element = document.createElement("a");
@@ -84,18 +107,28 @@ onmessage = (e) => {
       } else {
         targets.preserveMargins.removeAttribute("checked");
       }
+      Array.from(targets.outputType.options).forEach(o => {
+        if (o.value === settings.outputType) {
+          o.selected = true;
+        }
+        else {
+          o.removeAttribute("selected")
+        }
+      })
       updateView();
       break;
 
     case "DOWNLOAD_SUCCESS": {
       const { filename, data, documentName } = payload;
-      download(filename, toFileText(data, documentName));
+      const outputType = targets.outputType.options[targets.outputType.selectedIndex].value;
+      download(filename, fileTextFunctions[outputType](data, documentName));
       break;
     }
 
     case "COPY_AS_TEXT_SUCCESS": {
       const { data, documentName } = payload;
-      copyToClipboard(toFileText(data, documentName));
+      const outputType = targets.outputType.options[targets.outputType.selectedIndex].value;
+      copyToClipboard(fileTextFunctions[outputType](data, documentName));
       break;
     }
 
@@ -129,6 +162,7 @@ targets.settings.addEventListener("change", (e) => {
     preserveMargins: targets.preserveMargins.checked ? 'true' : 'false',
     filename: targets.filename.value,
     framePrefix: targets.framePrefix.value,
+    outputType: targets.outputType.options[targets.outputType.selectedIndex].value,
   };
   emit("UPDATE_SETTINGS", newSettings);
   updateView();
