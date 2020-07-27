@@ -1,0 +1,46 @@
+<div class="file">
+  <div class="file__header">
+    <div class="file__icon icon icon--draft"></div>
+    <span class="file__name type type--large type--bold" id="filenameLabel">icons.js</span>
+  </div>
+  <div class="file__action-group">
+    <button class="button button--primary file__action" id="download">
+      <div class="type type--medium">Download</div>
+    </button>
+    <button class="button button--secondary file__action" id="copyAsText">
+      <div class="type type--medium">Copy as text</div>
+    </button>
+  </div>
+</div>
+
+<form class="settings" id="pluginSettings">
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Format</div>
+    <select id="format" class="horizontal-input__input">
+      <!-- generated -->
+    </select>
+  </label>
+
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Frame Prefix</div>
+    <input id="framePrefix" type="input" class="input input__field horizontal-input__input" placeholder="prefix"
+      value="icon" />
+    <div class="horizontal-input__text type type--small">
+      &nbsp;/&nbsp;icon-name
+    </div>
+  </label>
+
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Filename</div>
+    <input id="fileName" type="input" class="input input__field horizontal-input__input" placeholder="file-name"
+      value="icons" />
+    <div id="fileExtension" class="horizontal-input__text type type--small">.js</div>
+  </label>
+
+  <label class="horizontal-input">
+    <div class="label horizontal-input__label">Preserve Margins?</div>
+    <div class="horizontal-input__input">
+      <input id="preserveMargins" type="checkbox" checked />
+    </div>
+  </label>
+</form>

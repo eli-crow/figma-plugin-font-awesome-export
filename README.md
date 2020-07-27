@@ -1,4 +1,4 @@
-# Figma Plugin: Font Awesome Custom Icon Export (Beta)
+# Figma Plugin: Awesome Icon Export (Beta)
 
 Take control of your iconography by connecting the best icon system of all time with the best design tool of all time. Export your Figma layers into FontAwesome's javascript icon library format for use on the web.
 

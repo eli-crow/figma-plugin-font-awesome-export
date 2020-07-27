@@ -1,40 +1,32 @@
-import { camelCase, kebabCase, clone } from 'lodash';
-
-figma.showUI(__html__, { height: 266 });
-
-const PREFIX_VAR = 'fa'
-const PREFIX_SET = 'fas'
-const VECTORABLES = [
-  'BOOLEAN_OPERATION',
-]
+import type { IconData, PluginData, PluginSettings } from './types';
 
 const storage = figma.root
 
-const settingDefaults = {
-  framePrefix: 'icon',
-  filename: 'icons',
-  preserveMargins: 'true',
-  outputType: 'font-awesome',
+function getPluginSettings(): PluginSettings {
+  return JSON.parse(storage.getPluginData("pluginSettings") || "null") || {};
 }
-for (let name in settingDefaults) {
-  const existing = storage.getPluginData(name);
-  if (!existing) storage.setPluginData(name, settingDefaults[name])
+
+function setPluginSettings(settings: PluginSettings): void {
+  storage.setPluginData("pluginSettings", JSON.stringify(settings));
+  figma.ui.postMessage({
+    type: "SETTINGS_UPDATED",
+    payload: settings
+  })
 }
 
 function matchesPrefix(string: string): boolean {
-  const framePrefix = storage.getPluginData("framePrefix")
-  const prefixRegex = new RegExp(`^\\s*${framePrefix}\\s*/\\s*`, 'g')
+  const settings = getPluginSettings();
+  const prefixRegex = new RegExp(`^\\s*${settings.framePrefix}\\s*/\\s*`, 'g')
   return Boolean(string.match(prefixRegex))
 }
 
 function toIconName(string: string): string {
-  const framePrefix = storage.getPluginData("framePrefix")
-  const prefixRegex = new RegExp(`^\\s*${framePrefix}\\s*/\\s*`, 'g')
-  return kebabCase(string.trim().replace(prefixRegex, ''))
+  const settings = getPluginSettings();
+  const prefixRegex = new RegExp(`^\\s*${settings.framePrefix}\\s*/\\s*`, 'g')
+  return string.trim().replace(prefixRegex, '')
 }
 
 function isCompletelyTransparent(node: GeometryMixin): boolean {
-
   if (node.fillStyleId) {
     const style = figma.getStyleById(node.fillStyleId.toString())
     if (style.type === 'PAINT') {
@@ -70,7 +62,7 @@ function isCompletelyTransparent(node: GeometryMixin): boolean {
   return true
 }
 
-function getIconData() {
+function getIconData(): IconData[] {
   const iconFrames: Array<FrameNode> = figma.root.findAll(n =>
     (n.type === 'FRAME' || n.type === 'COMPONENT')
     && n.visible
@@ -78,9 +70,7 @@ function getIconData() {
     && matchesPrefix(n.name)
   ) as Array<FrameNode>
 
-  //TODO: resolve winding rules
-  let unicodeCounter = 1
-  const results = []
+  const results: IconData[] = [];
   iconFrames.forEach(frame => {
 
     const descendents = frame.findAll(n =>
@@ -141,23 +131,20 @@ function getIconData() {
     const finalUnion = figma.union(clonedDescendents, figma.currentPage);
     const flattened = figma.flatten([finalUnion], figma.currentPage);
 
-    const unicode = 'e' + unicodeCounter.toString().padStart(3, '0')
-    unicodeCounter++
-    const pathData = flattened.vectorPaths.map(p => p.data).join(' ')
-    results.push({
-      offsetX: flattened.x,
-      offsetY: flattened.y,
-      varName: camelCase(PREFIX_VAR + ' ' + frame.name),
-      prefix: PREFIX_SET,
-      iconName: toIconName(frame.name),
+    const iconData: IconData = {
+      name: toIconName(frame.name),
       width: frame.width,
       height: frame.height,
+      offsetX: flattened.x,
+      offsetY: flattened.y,
       iconWidth: flattened.width,
       iconHeight: flattened.height,
-      unicode: unicode,
-      pathData: pathData,
-      preserveMargins: storage.getPluginData("preserveMargins") === 'true' ? true : false,
-    })
+      data: flattened.vectorPaths.map(p => p.data).join(' '),
+    };
+    // Don't add duplicates
+    if (!results.some(existingIcon => existingIcon.name === iconData.name)) {
+      results.push(iconData);
+    }
 
     flattened.remove()
   })
@@ -166,45 +153,49 @@ function getIconData() {
 }
 
 figma.ui.onmessage = ({ type, payload }) => {
-  switch (type) {
-    case "UPDATE_SETTINGS":
-      console.log(payload);
-      const settings = payload
-      for (let name in settings) {
-        storage.setPluginData(name, settings[name])
-      }
-      break;
-
-    case "DOWNLOAD":
-      figma.ui.postMessage({
-        type: "DOWNLOAD_SUCCESS",
-        payload: {
-          documentName: figma.root.name,
-          filename: storage.getPluginData("filename") + '.js',
-          data: getIconData()
-        }
-      })
-      break;
-
-    case "COPY_AS_TEXT":
-      figma.ui.postMessage({
-        type: "COPY_AS_TEXT_SUCCESS",
-        payload: {
-          documentName: figma.root.name,
-          data: getIconData()
-        }
-      })
-      break;
+  if (type === "UPDATE_SETTINGS") {
+    setPluginSettings(payload as PluginSettings)
+  }
+  else if (type === "DOWNLOAD") {
+    const payload: PluginData = {
+      pluginSettings: getPluginSettings(),
+      figmaDocumentName: figma.root.name,
+      icons: getIconData()
+    }
+    figma.ui.postMessage({
+      type: "DOWNLOAD_SUCCESS",
+      payload: payload
+    })
+  }
+  else if (type === "COPY") {
+    const payload: PluginData = {
+      pluginSettings: getPluginSettings(),
+      figmaDocumentName: figma.root.name,
+      icons: getIconData()
+    }
+    figma.ui.postMessage({
+      type: "COPY_SUCCESS",
+      payload: payload
+    })
   }
 };
 
-
-
-const initialSettings = {}
-for (let name in settingDefaults) {
-  initialSettings[name] = storage.getPluginData(name)
+function init() {
+  figma.showUI(__html__, { width: 320, height: 280 });
+  const settingDefaults: PluginSettings = {
+    framePrefix: 'icon',
+    fileName: 'icons',
+    preserveMargins: true,
+    format: 'Font Awesome JS Library',
+  };
+  setPluginSettings({
+    ...settingDefaults,
+    ...getPluginSettings(),
+  });
+  figma.ui.postMessage({
+    type: "INIT",
+    payload: getPluginSettings(),
+  })
 }
-figma.ui.postMessage({
-  type: "INIT",
-  payload: initialSettings
-})
+
+init();

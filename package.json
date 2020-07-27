@@ -19,10 +19,12 @@
   "license": "CC BY 4.0",
   "dependencies": {
     "copy-to-clipboard": "^3.3.1",
+    "figma-plugin-ds": "^0.1.8",
     "lodash": "^4.17.15",
     "paper": "^0.12.4"
   },
   "devDependencies": {
+    "@figma/plugin-typings": "^1.15.0",
     "@types/lodash": "^4.14.149",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "css-loader": "^3.5.2",

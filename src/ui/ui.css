@@ -1,3 +1,15 @@
+@import "~figma-plugin-ds/dist/figma-plugin-ds.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  padding: 12px;
+}
+
 .horizontal-input {
   display: flex;
   align-items: center;
@@ -17,12 +29,6 @@
   word-wrap: none;
   white-space: nowrap;
   color: rgb(189, 189, 189);
-}
-
-.input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin-left: 8px;
 }
 
 .file {
@@ -68,4 +74,16 @@
   grid-template-rows: repeat(auto-fill, minmax(60px, 1fr));
 }
 
-.preview {}
+input[type="checkbox"] {
+  margin-left: 8px;
+}
+
+select {
+  -webkit-appearance: menulist-button;
+  border: solid 1px transparent;
+  background-color: transparent;
+  height: 32px;
+}
+select:hover {
+  border-color: var(--black1);
+}
